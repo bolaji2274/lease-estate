@@ -24,26 +24,40 @@ const Register = () => {
     })
   };
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const register_form = new FormData();
-      for (var key in formData){
-        register_form.append(key, formData[key])
+  e.preventDefault();
+  try {
+    const register_form = new FormData(); // Corrected constructor
+    for (const key in formData) {
+      // Check if the key is a file to avoid appending "null"
+      if (key === "profileImage" && formData[key] instanceof File) {
+        register_form.append(key, formData[key]);
+      } else {
+        register_form.append(key, formData[key]);
       }
-      const response = await fetch("http://localhost:4000/auth/register", {
-        method: "POST",
-        body: register_form,
-      });
-      if (response.ok) {
-        console.log('Successful click');
-        
-        navigate("/login")
-      }
-    } catch (err) {
-      console.log("Registration Failed", err.message);
-      
     }
+
+    const response = await fetch("http://localhost:4000/auth/register", {
+      method: "POST",
+      body: register_form,
+    });
+
+    if (response.ok) {
+      console.log('Successful click');
+      navigate("/login");
+    } else {
+      // const errorData = await response.json();
+      const errorData = await response.json().catch(() => {
+        // If JSON parsing fails, log the error response
+        console.error("Non-JSON error response:", response);
+        throw new Error("Non-JSON error response received");
+      });
+      console.log("Registration Failed:", errorData.message || "An error occurred");
+    }
+  } catch (err) {
+    console.log("Registration Failed", err.message);
   }
+};
+
   useEffect(() => {
     setPasswordMatch(
       formData.password === formData.confirmPassword || formData.confirmPassword === ""
@@ -59,7 +73,7 @@ const Register = () => {
         className="flex flex-col gap-y-2.5 bg-white w-[366px] p-7 rounded-xl shadow-md text-[14px]">
     
             <h3 className="h3 my-4">Sign Up</h3>
-          
+
           <input
           onChange={handleChange}
             value={formData.firstName}
